@@ -15,8 +15,14 @@ from utils.keyboards import get_seller_menu_keyboard, get_yes_no_keyboard
 from constants import ROLE_SELLER
 from typing import Dict, Any
 
-# حالت‌های مکالمه
-ADD_PRODUCT, SET_PRICE, CONFIRM_PRODUCT, DELETE_PRODUCT, CONFIRM_DELETE = range(5)
+(
+    ADD_PRODUCT, 
+    SET_PRICE, 
+    CONFIRM_PRODUCT, 
+    DELETE_PRODUCT, 
+    CONFIRM_DELETE,
+    UPDATE_STOCK  # حالت جدید برای به‌روزرسانی موجودی
+) = range(6)  # از 5 به 6 افزایش دهید
 
 async def seller_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """منوی اصلی فروشنده"""
