@@ -1,5 +1,4 @@
 import logging
-import asyncio
 from telegram.ext import Application
 from telegram.error import TelegramError
 from config import BOT_TOKEN, WEBHOOK_URL, PORT
@@ -33,22 +32,32 @@ async def main():
 
     try:
         # تنظیم وب‌هوک
-        await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")  # توکن امن
+        await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
         # اجرای اپلیکیشن با وب‌هوک
         await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
             webhook_url=full_webhook_url,
-            secret_token="mysecret123",  # باید با set_webhook یکسان باشد
+            secret_token="mysecret123",
         )
         logger.info("Webhook started successfully.")
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
+        await app.stop()
+        await app.shutdown()
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        await app.stop()
+        await app.shutdown()
         raise
 
 if __name__ == "__main__":
+    import asyncio
     try:
         asyncio.run(main())
     except Exception as e:
         logger.error(f"Application error: {e}")
+    finally:
+        logger.info("Event loop closed.")
