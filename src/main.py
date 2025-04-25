@@ -23,8 +23,10 @@ async def main():
     full_webhook_url = f"{WEBHOOK_URL}{webhook_path}"
     logger.info(f"Setting webhook: {full_webhook_url}")
     try:
+        await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
-        await app.run_webhook(
+        await app.start()
+        await app.updater.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
@@ -34,6 +36,9 @@ async def main():
         logger.info("Webhook started successfully.")
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         raise
     finally:
         try:
