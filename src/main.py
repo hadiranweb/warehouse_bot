@@ -51,12 +51,16 @@ async def main():
             await app.stop()
             await app.shutdown()
             logger.info("Application stopped successfully.")
-            # اطمینان از بسته شدن حلقه رویداد
+            # بستن صریح حلقه رویداد
             loop = asyncio.get_running_loop()
             tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
             for task in tasks:
                 task.cancel()
-            await asyncio.sleep(0.1)  # فرصت دادن برای تکمیل خاموش کردن
+            await asyncio.sleep(0.5)  # فرصت بیشتر برای تکمیل خاموش کردن
+            loop.stop()
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
+            logger.info("Event loop closed successfully.")
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
@@ -65,3 +69,8 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         logger.error(f"Application error: {e}")
+        finally:
+            # اطمینان از بسته شدن حلقه در صورت خطای خارجی
+            loop = asyncio.get_event_loop()
+            if not loop.is_closed():
+                loop.close()
