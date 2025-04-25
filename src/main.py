@@ -1,5 +1,6 @@
 import logging
 from telegram.ext import Application
+from telegram.error import TelegramError
 from config import BOT_TOKEN, WEBHOOK_URL, PORT
 from database.db import init_db
 from handlers.role_selection import register_handlers as register_role_handlers
@@ -12,7 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def main():
+def main():
     # مقداردهی اولیه پایگاه داده
     init_db()
 
@@ -29,17 +30,19 @@ async def main():
     full_webhook_url = f"{WEBHOOK_URL}{webhook_path}"
     logger.info(f"Setting webhook: {full_webhook_url}")
 
-    # اجرای اپلیکیشن با وب‌هوک در context مدیریت‌شده
-    async with app:
-        await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
-        await app.run_webhook(
+    try:
+        # تنظیم وب‌هوک و اجرای اپلیکیشن با وب‌هوک
+        app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
             webhook_url=full_webhook_url,
-            secret_token="mysecret123",
+            secret_token="mysecret123",  # باید با set_webhook یکسان باشد
         )
+        logger.info("Webhook started successfully.")
+    except TelegramError as e:
+        logger.error(f"Failed to start webhook: {e}")
+        raise
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
