@@ -56,7 +56,7 @@ async def main():
             tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
             for task in tasks:
                 task.cancel()
-            await asyncio.sleep(0.5)  # فرصت بیشتر برای تکمیل خاموش کردن
+            await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش کردن
             loop.stop()
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()
@@ -65,12 +65,4 @@ async def main():
             logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except Exception as e:
-        logger.error(f"Application error: {e}")
-        finally:
-            # اطمینان از بسته شدن حلقه در صورت خطای خارجی
-            loop = asyncio.get_event_loop()
-            if not loop.is_closed():
-                loop.close()
+    asyncio.run(main())
