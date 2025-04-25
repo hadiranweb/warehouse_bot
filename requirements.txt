@@ -1,10 +1,9 @@
-pip==25.0.1
-python-telegram-bot[webhooks]==20.7
-SQLAlchemy==2.0.31
+python-telegram-bot==20.7
 psycopg2-binary==2.9.9
 python-dotenv==1.0.1
-reportlab==4.2.2
+SQLAlchemy==2.0.31
 pandas==2.2.2
 openpyxl==3.1.5
-apscheduler==3.10.4
-pillow==10.4.0
+reportlab==4.2.2
+APScheduler==3.10.4
+aiohttp==3.10.0
