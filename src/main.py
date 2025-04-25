@@ -1,52 +1,26 @@
 import logging
 import asyncio
-#موقت
-import logging
-from config import BOT_TOKEN, WEBHOOK_URL  # import متغیرهای ضروری
-
-# تنظیم لاگ‌گیری
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-async def main():
-    logger.info("🔍 شروع تشخیص...")
-    if not await diagnostic():
-        logger.error("تشخیص اولیه ناموفق بود!")
-        return
-    
-    logger.info("✅ راه‌اندازی ربات...")
-    try:
-        # کدهای راه‌اندازی اصلی ربات
-        pass
-    except Exception as e:
-        logger.error(f"خطا در راه‌اندازی: {e}")
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("ربات با کیبورد متوقف شد")
-    except Exception as e:
-        logger.error(f"خطای غیرمنتظره: {e}")
-#موقت
+from config import BOT_TOKEN, WEBHOOK_URL, PORT  # افزودن صحیح متغیرهای گم‌شده
 from telegram.ext import Application
 from telegram.error import TelegramError
-from config import BOT_TOKEN, WEBHOOK_URL, PORT
 from database.db import init_db
 from handlers.role_selection import register_handlers as register_role_handlers
 from handlers.seller_handlers import register_handlers as register_seller_handlers
 from handlers.customer_handlers import register_handlers as register_customer_handlers
-
 from aiohttp import web
 
+# تنظیمات لاگ‌گیری
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# تابع async برای تشخیص
+async def diagnostic():
+    # شبیه‌سازی تابع تشخیص
+    logger.info("در حال انجام تشخیص...")
+    return True
 
 # هندلر برای مسیر root (GET /)
 async def handle_root(request):
@@ -62,7 +36,16 @@ async def handle_webhook(request):
         logger.error(f"Error handling update: {e}")
         return web.Response(status=500)
 
+# تابع اصلی
 async def main():
+    logger.info("🔍 شروع تشخیص...")
+    if not await diagnostic():
+        logger.error("تشخیص اولیه ناموفق بود!")
+        return
+    
+    logger.info("✅ راه‌اندازی ربات...")
+    
+    # راه‌اندازی دیتابیس و ثبت هندلرها
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
     register_role_handlers(app)
@@ -86,6 +69,7 @@ async def main():
     await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
     await app.start()
 
+    # راه‌اندازی وب‌سرور برای وب‌هوک
     aiohttp_app = web.Application()
     aiohttp_app["bot_app"] = app
     aiohttp_app.router.add_post(webhook_path, handle_webhook)
