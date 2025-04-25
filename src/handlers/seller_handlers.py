@@ -98,7 +98,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def register_handlers(app: Application):
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("menu", seller_menu, filters=filters.User(user_id=None, allow_empty=True))],
+        entry_points=[CommandHandler("menu", seller_menu, filters=filters.User())],
         states={
             ADD_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product)],
             SET_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_price)],
