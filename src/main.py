@@ -58,7 +58,7 @@ async def main():
                 task.cancel()
             await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش کردن
             loop.stop()
-            loop.run_until_complete(loop.shutdown_asyncgens())
+            await loop.shutdown_asyncgens()  # استفاده از await برای coroutine
             loop.close()
             logger.info("Event loop closed successfully.")
         except Exception as e:
