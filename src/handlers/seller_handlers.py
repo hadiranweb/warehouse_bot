@@ -316,6 +316,7 @@ def register_handlers(app: Application) -> None:
             ADD_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product)],
             SET_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_price)],
             CONFIRM_PRODUCT: [CallbackQueryHandler(confirm_product)],
+            UPDATE_STOCK: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_stock_update)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_message=False,
