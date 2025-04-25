@@ -1,4 +1,3 @@
-# src/handlers/seller_handlers.py
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -14,7 +13,7 @@ from database.models import Product
 from utils.keyboards import get_seller_menu_keyboard, get_yes_no_keyboard
 from constants import ROLE_SELLER
 
-ADD_PRODUCT, CONFIRM_PRODUCT, DELETE_PRODUCT, CONFIRM_DELETE = range(4)
+ADD_PRODUCT, SET_PRICE, CONFIRM_PRODUCT, DELETE_PRODUCT, CONFIRM_DELETE = range(5)
 
 async def seller_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("role") != ROLE_SELLER:
@@ -26,10 +25,22 @@ async def seller_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def add_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["new_product"] = {"name": update.message.text}
-    await update.message.reply_text(
-        "لطفاً قیمت محصول را وارد کنید:"
-    )
-    return CONFIRM_PRODUCT
+    await update.message.reply_text("لطفاً قیمت محصول را وارد کنید:")
+    return SET_PRICE
+
+async def set_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        price = float(update.message.text)
+        context.user_data["new_product"]["price"] = price
+        keyboard = get_yes_no_keyboard()
+        await update.message.reply_text(
+            f"محصول: {context.user_data['new_product']['name']}, قیمت: {price}\nتأیید می‌کنید؟",
+            reply_markup=keyboard,
+        )
+        return CONFIRM_PRODUCT
+    except ValueError:
+        await update.message.reply_text("لطفاً یک عدد معتبر برای قیمت وارد کنید!")
+        return SET_PRICE
 
 async def confirm_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -38,7 +49,7 @@ async def confirm_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with get_session() as session:
             product = Product(
                 name=context.user_data["new_product"]["name"],
-                price=float(context.user_data["new_product"].get("price", 0)),
+                price=context.user_data["new_product"]["price"],
             )
             session.add(product)
             session.commit()
@@ -90,6 +101,7 @@ def register_handlers(app: Application):
         entry_points=[CommandHandler("menu", seller_menu, filters=filters.User(user_id=None, allow_empty=True))],
         states={
             ADD_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product)],
+            SET_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_price)],
             CONFIRM_PRODUCT: [CallbackQueryHandler(confirm_product)],
             DELETE_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product)],
             CONFIRM_DELETE: [CallbackQueryHandler(confirm_delete)],
