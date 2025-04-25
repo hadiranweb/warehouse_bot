@@ -62,7 +62,7 @@ def register_handlers(app: Application) -> None:
             ],
         },
         fallbacks=[],
-        per_message=True,  # برای مدیریت بهتر callback queries
+        per_message=False,  # برای مدیریت بهتر callback queries
     )
     
     app.add_handler(conv_handler)
