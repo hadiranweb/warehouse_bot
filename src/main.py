@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from telegram.ext import Application
 from telegram.error import TelegramError
@@ -15,6 +14,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def main():
+    # مقداردهی اولیه پایگاه داده
+    init_db()
+
+    # ساخت Application
     app = Application.builder().token(BOT_TOKEN).build()
 
     # ثبت هندلرها
@@ -28,42 +31,40 @@ async def main():
     logger.info(f"Setting webhook: {full_webhook_url}")
 
     try:
-        await app.updater.start_webhook(
+        # تنظیم وب‌هوک
+        await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")  # توکن امن
+        # اجرای اپلیکیشن با وب‌هوک
+        await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
             webhook_url=full_webhook_url,
+            secret_token="mysecret123",  # باید با set_webhook یکسان باشه
         )
         logger.info("Webhook started successfully.")
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
         raise
 
-    return app
-
 async def shutdown(app):
-    if app is not None:
+    if app:
         logger.info("Stopping webhook...")
         try:
-            await app.updater.stop()
             await app.stop()
+            await app.shutdown()
             logger.info("Application stopped successfully.")
         except TelegramError as e:
             logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
-    # مقداردهی اولیه پایگاه داده
-    init_db()
+    import asyncio
 
-    loop = asyncio.get_event_loop()
     app = None
     try:
-        app = loop.run_until_complete(main())
-        loop.run_forever()
+        app = asyncio.run(main())
     except Exception as e:
         logger.error(f"Application error: {e}")
     finally:
-        if app is not None:
-            loop.run_until_complete(shutdown(app))
-        loop.close()
+        if app:
+            asyncio.run(shutdown(app))
         logger.info("Event loop closed.")
