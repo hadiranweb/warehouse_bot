@@ -1,13 +1,13 @@
 import os
 from telegram.ext import Application, CommandHandler
-from config import TELEGRAM_TOKEN
+from config import BOT_TOKEN
 from database import init_db
 from handlers import start, add_item, list_items, delete_item
 import asyncio
 
 async def main():
     init_db()
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("add", add_item))
@@ -16,7 +16,7 @@ async def main():
 
     PORT = int(os.environ.get("PORT", 8443))  # پورت پیش‌فرض برای webhook
     RENDER_APP_NAME = os.environ.get("RENDER_APP_NAME")
-    webhook_url = f"https://{RENDER_APP_NAME}.onrender.com/{TELEGRAM_TOKEN}"
+    webhook_url = f"https://{RENDER_APP_NAME}.onrender.com/{BOT_TOKEN}"
 
     print(f"Webhook تنظیم شد: {webhook_url}")
     await app.bot.set_webhook(webhook_url)
@@ -27,7 +27,7 @@ async def main():
     await app.updater.start_webhook(
         listen="0.0.0.0",
         port=PORT,
-        url_path=f"/{TELEGRAM_TOKEN}",
+        url_path=f"/{BOT_TOKEN}",
         webhook_url=webhook_url
     )
     print("ربات در حال اجرا است...")
