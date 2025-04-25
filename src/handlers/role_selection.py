@@ -1,39 +1,37 @@
-# src/handlers/role_selection.py
 from telegram import Update
 from telegram.ext import (
     Application,
-    CommandHandler,
     CallbackQueryHandler,
+    CommandHandler,
     ConversationHandler,
     ContextTypes,
 )
-from utils.keyboards import get_role_selection_keyboard
-from constants import START_MESSAGE, ROLE_SELLER, ROLE_CUSTOMER
+from constants import ROLE_SELLER, ROLE_CUSTOMER, START_MESSAGE
+from utils.keyboards import get_role_selection_keyboard  # ایمپورت تابع درست
 
-SELECT_ROLE = 1
+SELECTING_ROLE = 0
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = get_role_selection_keyboard()
-    await update.message.reply_text(START_MESSAGE, reply_markup=keyboard)
-    return SELECT_ROLE
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        START_MESSAGE, reply_markup=get_role_selection_keyboard()
+    )
+    return SELECTING_ROLE
 
-async def role_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def select_role(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     role = query.data
-    if role in [ROLE_SELLER, ROLE_CUSTOMER]:
-        context.user_data["role"] = role
-        await query.message.reply_text(f"نقش شما به عنوان {role} تنظیم شد!")
-        return ConversationHandler.END
-    else:
-        await query.message.reply_text("نقش نامعتبر! لطفاً دوباره انتخاب کنید.")
-        return SELECT_ROLE
+    context.user_data["role"] = role
+    await query.message.reply_text(f"You selected {role}")
+    return ConversationHandler.END
 
-def register_handlers(app: Application):
+def register_handlers(app: Application) -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            SELECT_ROLE: [CallbackQueryHandler(role_callback)],
+            SELECTING_ROLE: [
+                CallbackQueryHandler(select_role, pattern=f"^{ROLE_SELLER}$|^{ROLE_CUSTOMER}$"),
+            ],
         },
         fallbacks=[],
         per_message=True,
