@@ -1,60 +1,100 @@
+# src/handlers/seller_handlers.py
 from telegram import Update
 from telegram.ext import (
     Application,
+    CommandHandler,
+    MessageHandler,
     CallbackQueryHandler,
     ConversationHandler,
-    MessageHandler,
-    filters,
     ContextTypes,
+    filters,
 )
-from utils.keyboards import create_menu
 from database.db import get_session
-from database.models import User
-from constants import SELLER_MENU
+from database.models import Product
+from utils.keyboards import get_seller_menu_keyboard, get_yes_no_keyboard
+from constants import ROLE_SELLER
 
-CUSTOMER_MANAGEMENT, ADD_CUSTOMER, SAVE_CUSTOMER = range(3)
+ADD_PRODUCT, CONFIRM_PRODUCT, DELETE_PRODUCT, CONFIRM_DELETE = range(4)
 
-async def customer_management(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def seller_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data.get("role") != ROLE_SELLER:
+        await update.message.reply_text("شما دسترسی به این منو ندارید!")
+        return ConversationHandler.END
+    keyboard = get_seller_menu_keyboard()
+    await update.message.reply_text("منوی فروشنده:", reply_markup=keyboard)
+    return ADD_PRODUCT
+
+async def add_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["new_product"] = {"name": update.message.text}
+    await update.message.reply_text(
+        "لطفاً قیمت محصول را وارد کنید:"
+    )
+    return CONFIRM_PRODUCT
+
+async def confirm_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    menu = [
-        ("ثبت مشتری جدید", "add_customer"),
-        ("حذف مشتری", "delete_customer"),
-        ("اصلاح اطلاعات مشتری", "edit_customer"),
-        ("جستجوی مشتری", "search_customer"),
-        ("لیست مشتریان", "list_customers"),
-    ]
-    await query.message.reply_text("مدیریت مشتریان:", reply_markup=create_menu(menu))
-    return CUSTOMER_MANAGEMENT
+    if query.data == "yes":
+        with get_session() as session:
+            product = Product(
+                name=context.user_data["new_product"]["name"],
+                price=float(context.user_data["new_product"].get("price", 0)),
+            )
+            session.add(product)
+            session.commit()
+        await query.message.reply_text("محصول با موفقیت اضافه شد!")
+    else:
+        await query.message.reply_text("اضافه کردن محصول لغو شد.")
+    return ConversationHandler.END
 
-async def add_customer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    await query.message.reply_text("لطفاً اطلاعات مشتری را وارد کنید (نام، شماره تماس، آدرس (اختیاری)، ایمیل (اختیاری)):")
-    return ADD_CUSTOMER
-
-async def save_customer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.split(",")
-    name = text[0].strip()
-    phone = text[1].strip() if len(text) > 1 else None
-    address = text[2].strip() if len(text) > 2 else None
-    email = text[3].strip() if len(text) > 3 else None
-
+async def delete_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    product_name = update.message.text
     with get_session() as session:
-        customer = User(name=name, phone=phone, address=address, email=email, role="customer")
-        session.add(customer)
-        session.commit()
+        product = session.query(Product).filter(Product.name == product_name).first()
+        if product:
+            context.user_data["delete_product_id"] = product.id
+            keyboard = get_yes_no_keyboard()
+            await update.message.reply_text(
+                f"آیا مطمئن هستید که می‌خواهید '{product_name}' را حذف کنید؟",
+                reply_markup=keyboard,
+            )
+            return CONFIRM_DELETE
+        else:
+            await update.message.reply_text("محصول یافت نشد!")
+            return ConversationHandler.END
 
-    await update.message.reply_text("مشتری با موفقیت ثبت شد.", reply_markup=create_menu(SELLER_MENU))
+async def confirm_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    if query.data == "yes":
+        with get_session() as session:
+            product = session.query(Product).filter(
+                Product.id == context.user_data["delete_product_id"]
+            ).first()
+            if product:
+                session.delete(product)
+                session.commit()
+                await query.message.reply_text("محصول با موفقیت حذف شد!")
+            else:
+                await query.message.reply_text("محصول یافت نشد!")
+    else:
+        await query.message.reply_text("حذف محصول لغو شد.")
+    return ConversationHandler.END
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("عملیات لغو شد.")
     return ConversationHandler.END
 
 def register_handlers(app: Application):
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(customer_management, pattern="^customer_management$")],
+        entry_points=[CommandHandler("menu", seller_menu, filters=filters.User(user_id=None, allow_empty=True))],
         states={
-            CUSTOMER_MANAGEMENT: [CallbackQueryHandler(add_customer, pattern="^add_customer$")],
-            ADD_CUSTOMER: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_customer)],
+            ADD_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product)],
+            CONFIRM_PRODUCT: [CallbackQueryHandler(confirm_product)],
+            DELETE_PRODUCT: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_product)],
+            CONFIRM_DELETE: [CallbackQueryHandler(confirm_delete)],
         },
-        fallbacks=[],
+        fallbacks=[CommandHandler("cancel", cancel)],
+        per_message=False,
     )
     app.add_handler(conv_handler)
