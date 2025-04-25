@@ -21,7 +21,8 @@ async def main():
     print(f"Webhook تنظیم شد: {webhook_url}")
     await app.bot.set_webhook(webhook_url)
 
-    # راه‌اندازی webhook
+    # آماده‌سازی و اجرای webhook
+    await app.initialize()  # اضافه کردن initialize
     await app.start()
     await app.updater.start_webhook(
         listen="0.0.0.0",
@@ -40,4 +41,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         loop.run_until_complete(app.updater.stop())
         loop.run_until_complete(app.stop())
+        loop.run_until_complete(app.shutdown())  # اضافه کردن shutdown
         loop.close()
