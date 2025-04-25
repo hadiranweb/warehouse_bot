@@ -14,15 +14,15 @@ async def main():
     app.add_handler(CommandHandler("list", list_items))
     app.add_handler(CommandHandler("delete", delete_item))
 
-    PORT = int(os.environ.get("PORT", 8000))
-    RENDER_APP_NAME = os.environ.get("RENDER_APP_NAME")
+    PORT = int(os.environ.get("PORT", 8443))  # پورت پیش‌فرض برای webhook
+    RENDER_APP_NAME = os.environ.get("RENDER_APP_NAME", "warehouse-bot-123")
     webhook_url = f"https://{RENDER_APP_NAME}.onrender.com/{TELEGRAM_TOKEN}"
 
     print(f"Webhook تنظیم شد: {webhook_url}")
     await app.bot.set_webhook(webhook_url)
 
     # آماده‌سازی و اجرای webhook
-    await app.initialize()  # اضافه کردن initialize
+    await app.initialize()
     await app.start()
     await app.updater.start_webhook(
         listen="0.0.0.0",
@@ -38,8 +38,9 @@ if __name__ == "__main__":
     try:
         app = loop.run_until_complete(main())
         loop.run_forever()
-    except KeyboardInterrupt:
+    except Exception as e:
+        print(f"خطا: {e}")
         loop.run_until_complete(app.updater.stop())
         loop.run_until_complete(app.stop())
-        loop.run_until_complete(app.shutdown())  # اضافه کردن shutdown
+        loop.run_until_complete(app.shutdown())
         loop.close()
