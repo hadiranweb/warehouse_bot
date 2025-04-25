@@ -24,6 +24,9 @@ async def main():
     if not full_webhook_url.startswith("https://"):
         logger.error(f"Invalid WEBHOOK_URL: {full_webhook_url}. Must use HTTPS.")
         raise ValueError("WEBHOOK_URL must use HTTPS")
+    if ":" in WEBHOOK_URL.split("//")[1]:
+        logger.error(f"WEBHOOK_URL contains invalid port: {WEBHOOK_URL}. Must use default HTTPS port (443).")
+        raise ValueError("WEBHOOK_URL must not specify a port")
     logger.info(f"Setting webhook: {full_webhook_url}")
     try:
         await app.initialize()
