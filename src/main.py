@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 async def handle_webhook(request):
     try:
         update = await request.json()
+        logger.info(f"Received update: {update}")
         await request.app["bot_app"].process_update(update)
-        return web.Response(status=200)
+        return web.json_response({"status": "ok", "message": "update processed"})
     except Exception as e:
-        logger.error(f"Error handling update: {e}")
-        return web.Response(status=500)
-
+        logger.exception("Error handling update")
+        return web.json_response({"status": "error", "message": str(e)}, status=500)
+        
 async def main():
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
