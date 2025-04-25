@@ -9,6 +9,37 @@ from handlers.seller_handlers import register_handlers as register_seller_handle
 from handlers.customer_handlers import register_handlers as register_customer_handlers
 
 from aiohttp import web
+#موقت
+async def diagnostic():
+    from telegram import Bot
+    from telegram.error import TelegramError
+    
+    try:
+        test_bot = Bot(token=config.BOT_TOKEN)
+        print("🔄 تست ارتباط پایه با تلگرام...")
+        me = await test_bot.get_me()
+        print(f"✅ ارتباط موفق - ربات: @{me.username}")
+        
+        print("🔄 تست دریافت آخرین آپدیت...")
+        updates = await test_bot.get_updates(limit=1)
+        if updates:
+            print(f"✅ آخرین آپدیت: {updates[-1].update_id}")
+        else:
+            print("⚠️ هیچ آپدیتی دریافت نشد - پیامی به ربات ارسال کنید")
+            
+        if config.WEBHOOK_URL:
+            print(f"🔄 تست وب هوک در {config.WEBHOOK_URL}...")
+            await test_bot.set_webhook(config.WEBHOOK_URL)
+            info = await test_bot.get_webhook_info()
+            print(f"ℹ️ وضعیت وب هوک: {info}")
+    except TelegramError as e:
+        print(f"❌ خطای تلگرام: {e}")
+    except Exception as e:
+        print(f"❌ خطای غیرمنتظره: {e}")
+
+# در main():
+await diagnostic()
+#موقت
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
