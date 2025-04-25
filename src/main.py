@@ -16,16 +16,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# هندلر برای مسیر root (GET /)
+async def handle_root(request):
+    return web.Response(text="Server is up and running!")
+
+# هندلر برای پردازش وب‌هوک
 async def handle_webhook(request):
     try:
         update = await request.json()
-        logger.info(f"Received update: {update}")
         await request.app["bot_app"].process_update(update)
-        return web.json_response({"status": "ok", "message": "update processed"})
+        return web.Response(status=200)
     except Exception as e:
-        logger.exception("Error handling update")
-        return web.json_response({"status": "error", "message": str(e)}, status=500)
-        
+        logger.error(f"Error handling update: {e}")
+        return web.Response(status=500)
+
 async def main():
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
@@ -53,6 +57,9 @@ async def main():
     aiohttp_app = web.Application()
     aiohttp_app["bot_app"] = app
     aiohttp_app.router.add_post(webhook_path, handle_webhook)
+
+    # افزودن هندلر برای root (GET /)
+    aiohttp_app.router.add_get('/', handle_root)
 
     runner = web.AppRunner(aiohttp_app)
     await runner.setup()
