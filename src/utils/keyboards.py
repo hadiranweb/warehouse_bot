@@ -1,29 +1,39 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from constants import ROLE_SELLER, ROLE_CUSTOMER
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ConversationHandler,
+    ContextTypes,
+)
+from constants import ROLE_SELLER, ROLE_CUSTOMER, START_MESSAGE
+from utils.keyboards import get_role_selection_keyboard  # ایمپورت تابع درست
 
-def get_role_selection_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton("فروشنده", callback_data=ROLE_SELLER),
-            InlineKeyboardButton("مشتری", callback_data=ROLE_CUSTOMER),
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+SELECTING_ROLE = 0
 
-def get_yes_no_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton("بله", callback_data="yes"),
-            InlineKeyboardButton("خیر", callback_data="no"),
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        START_MESSAGE, reply_markup=get_role_selection_keyboard()
+    )
+    return SELECTING_ROLE
 
-def get_seller_menu_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton("اضافه کردن محصول", callback_data="add_product"),
-            InlineKeyboardButton("حذف محصول", callback_data="delete_product"),
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+async def select_role(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    role = query.data
+    context.user_data["role"] = role
+    await query.message.reply_text(f"You selected {role}")
+    return ConversationHandler.END
+
+def register_handlers(app: Application) -> None:
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            SELECTING_ROLE: [
+                CallbackQueryHandler(select_role, pattern=f"^{ROLE_SELLER}$|^{ROLE_CUSTOMER}$"),
+            ],
+        },
+        fallbacks=[],
+        per_message=True,
+    )
+    app.add_handler(conv_handler)
