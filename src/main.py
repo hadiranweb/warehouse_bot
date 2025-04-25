@@ -33,14 +33,21 @@ async def main():
         await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
         await app.start()
-        # استفاده از run_webhook با تنظیمات استاندارد
-        await app.run_webhook(
-            listen="0.0.0.0",
-            port=PORT,
-            url_path=webhook_path,
-            secret_token="mysecret123",
-            bootstrap_retries=3,  # تلاش دوباره برای تنظیم وب‌هوک
-        )
+        # استفاده از run_forever با وب‌سرور دستی
+        from aiohttp import web
+        async def handle_webhook(request):
+            update = await request.json()
+            await app.process_update(update)
+            return web.Response(status=200)
+        aiohttp_app = web.Application()
+        aiohttp_app.router.add_post(f"/{webhook_path}", handle_webhook)
+        runner = web.AppRunner(aiohttp_app)
+        await runner.setup()
+        site = web.TCPSite(runner, "0.0.0.0", PORT)
+        await site.start()
+        logger.info(f"Webhook server started on port {PORT}")
+        # اجرای اپلیکیشن تا خاموش شدن
+        await app.run_forever()
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
         raise
@@ -51,13 +58,15 @@ async def main():
         try:
             await app.stop()
             await app.shutdown()
-            logger.info("Application stopped successfully.")
-            # اطمینان از توقف حلقه رویداد
+            # توقف وب‌سرور
+            await runner.cleanup()
+            logger.info("Application and webhook server stopped successfully.")
+            # توقف تسک‌های باقی‌مونده
             loop = asyncio.get_running_loop()
             tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
             for task in tasks:
                 task.cancel()
-            await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش کردن
+            await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش شدن
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
