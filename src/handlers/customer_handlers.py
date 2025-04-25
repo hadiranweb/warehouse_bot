@@ -101,7 +101,7 @@ def register_handlers(app: Application) -> None:
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
-        per_message=False,  # برای مدیریت بهتر مکالمات
+        per_message=True  # تنظیم مناسب
     )
     
     app.add_handler(conv_handler)
