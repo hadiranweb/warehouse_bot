@@ -33,13 +33,13 @@ async def main():
         await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
         await app.start()
+        # استفاده از run_webhook بدون مدیریت دستی حلقه
         await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
             secret_token="mysecret123",
         )
-        logger.info("Webhook started successfully.")
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
         raise
@@ -51,18 +51,13 @@ async def main():
             await app.stop()
             await app.shutdown()
             logger.info("Application stopped successfully.")
-            # بستن صریح حلقه رویداد
-            loop = asyncio.get_running_loop()
-            tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
-            for task in tasks:
-                task.cancel()
-            await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش کردن
-            loop.stop()
-            await loop.shutdown_asyncgens()  # استفاده از await برای coroutine
-            loop.close()
-            logger.info("Event loop closed successfully.")
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Application interrupted by user.")
+    except Exception as e:
+        logger.error(f"Application error: {e}")
