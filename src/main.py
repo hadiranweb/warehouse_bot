@@ -1,14 +1,5 @@
 import logging
 import asyncio
-from telegram.ext import Application
-from telegram.error import TelegramError
-from config import BOT_TOKEN, WEBHOOK_URL, PORT
-from database.db import init_db
-from handlers.role_selection import register_handlers as register_role_handlers
-from handlers.seller_handlers import register_handlers as register_seller_handlers
-from handlers.customer_handlers import register_handlers as register_customer_handlers
-
-from aiohttp import web
 #موقت
 async def diagnostic():
     from telegram import Bot
@@ -37,9 +28,25 @@ async def diagnostic():
     except Exception as e:
         print(f"❌ خطای غیرمنتظره: {e}")
 
-# در main():
-await diagnostic()
+async def main():
+    print("🔍 شروع تشخیص...")
+    await diagnostic()
+    # بقیه کدهای راه‌اندازی ربات...
+    print("✅ تشخیص کامل شد")
+
+if __name__ == "__main__":
+    # اجرای توابع async
+    asyncio.run(main())
 #موقت
+from telegram.ext import Application
+from telegram.error import TelegramError
+from config import BOT_TOKEN, WEBHOOK_URL, PORT
+from database.db import init_db
+from handlers.role_selection import register_handlers as register_role_handlers
+from handlers.seller_handlers import register_handlers as register_seller_handlers
+from handlers.customer_handlers import register_handlers as register_customer_handlers
+
+from aiohttp import web
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
