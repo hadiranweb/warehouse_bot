@@ -18,3 +18,12 @@ def get_yes_no_keyboard():
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
+
+def get_seller_menu_keyboard():
+    keyboard = [
+        [
+            InlineKeyboardButton("اضافه کردن محصول", callback_data="add_product"),
+            InlineKeyboardButton("حذف محصول", callback_data="delete_product"),
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
