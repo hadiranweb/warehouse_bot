@@ -56,6 +56,5 @@ def register_handlers(app: Application):
             ADD_CUSTOMER: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_customer)],
         },
         fallbacks=[],
-        per_message=True,
     )
     app.add_handler(conv_handler)
