@@ -32,11 +32,10 @@ async def main():
         await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
         await app.start()
-        await app.updater.run_webhook(
+        await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
             url_path=webhook_path,
-            webhook_url=full_webhook_url,
             secret_token="mysecret123",
         )
         logger.info("Webhook started successfully.")
@@ -48,8 +47,7 @@ async def main():
         raise
     finally:
         try:
-            if app.updater and app.updater.running:
-                await app.stop()
+            await app.stop()
             await app.shutdown()
             logger.info("Application stopped successfully.")
         except Exception as e:
