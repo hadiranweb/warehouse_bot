@@ -1,42 +1,36 @@
 import logging
 import asyncio
 #موقت
-async def diagnostic():
-    from telegram import Bot
-    from telegram.error import TelegramError
-    
-    try:
-        test_bot = Bot(token=config.BOT_TOKEN)
-        print("🔄 تست ارتباط پایه با تلگرام...")
-        me = await test_bot.get_me()
-        print(f"✅ ارتباط موفق - ربات: @{me.username}")
-        
-        print("🔄 تست دریافت آخرین آپدیت...")
-        updates = await test_bot.get_updates(limit=1)
-        if updates:
-            print(f"✅ آخرین آپدیت: {updates[-1].update_id}")
-        else:
-            print("⚠️ هیچ آپدیتی دریافت نشد - پیامی به ربات ارسال کنید")
-            
-        if config.WEBHOOK_URL:
-            print(f"🔄 تست وب هوک در {config.WEBHOOK_URL}...")
-            await test_bot.set_webhook(config.WEBHOOK_URL)
-            info = await test_bot.get_webhook_info()
-            print(f"ℹ️ وضعیت وب هوک: {info}")
-    except TelegramError as e:
-        print(f"❌ خطای تلگرام: {e}")
-    except Exception as e:
-        print(f"❌ خطای غیرمنتظره: {e}")
+import logging
+from config import BOT_TOKEN, WEBHOOK_URL  # import متغیرهای ضروری
+
+# تنظیم لاگ‌گیری
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 async def main():
-    print("🔍 شروع تشخیص...")
-    await diagnostic()
-    # بقیه کدهای راه‌اندازی ربات...
-    print("✅ تشخیص کامل شد")
+    logger.info("🔍 شروع تشخیص...")
+    if not await diagnostic():
+        logger.error("تشخیص اولیه ناموفق بود!")
+        return
+    
+    logger.info("✅ راه‌اندازی ربات...")
+    try:
+        # کدهای راه‌اندازی اصلی ربات
+        pass
+    except Exception as e:
+        logger.error(f"خطا در راه‌اندازی: {e}")
 
 if __name__ == "__main__":
-    # اجرای توابع async
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("ربات با کیبورد متوقف شد")
+    except Exception as e:
+        logger.error(f"خطای غیرمنتظره: {e}")
 #موقت
 from telegram.ext import Application
 from telegram.error import TelegramError
