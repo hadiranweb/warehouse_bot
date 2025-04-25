@@ -1,8 +1,9 @@
+pip==25.0.1
 python-telegram-bot[webhooks]==20.0
 SQLAlchemy==2.0.23
-psycopg2-binary==2.9.9  # برای PostgreSQL (یا سایر درایورهای پایگاه داده)
+psycopg2-binary==2.9.9
 python-dotenv==1.0.0
-reportlab==4.0.8  # برای تولید PDF
-pandas==2.0.3  # برای تولید Excel
-openpyxl==3.1.2  # برای کار با فایل‌های Excel
-apscheduler==3.10.4  # برای زمان‌بندی یادآورها
+reportlab==4.0.8
+pandas==2.0.3
+openpyxl==3.1.2
+apscheduler==3.10.4
