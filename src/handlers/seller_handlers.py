@@ -15,6 +15,11 @@ from utils.keyboards import get_seller_menu_keyboard, get_yes_no_keyboard
 from constants import ROLE_SELLER
 from typing import Dict, Any
 
+import logging
+
+# تنظیم لاگر
+logger = logging.getLogger(__name__)
+
 (
     ADD_PRODUCT, 
     SET_PRICE, 
