@@ -23,6 +23,5 @@ def register_handlers(app: Application):
         entry_points=[CallbackQueryHandler(view_credit_purchases, pattern="^view_credit_purchases$")],
         states={VIEW_CREDIT_PURCHASES: []},
         fallbacks=[],
-        per_message=True,
     )
     app.add_handler(conv_handler)
