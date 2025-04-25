@@ -20,6 +20,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def select_role(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+
     role = query.data
     context.user_data["role"] = role
     await query.message.reply_text(f"You selected {role}")
