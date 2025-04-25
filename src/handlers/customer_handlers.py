@@ -1,4 +1,3 @@
-# src/handlers/customer_handlers.py
 from telegram import Update
 from telegram.ext import (
     Application,
