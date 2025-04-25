@@ -33,7 +33,6 @@ async def main():
         await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
         await app.start()
-        # استفاده از run_webhook بدون مدیریت دستی حلقه
         await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
