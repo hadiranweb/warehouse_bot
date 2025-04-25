@@ -21,6 +21,9 @@ async def main():
     register_customer_handlers(app)
     webhook_path = f"/{BOT_TOKEN.replace(':', '_')}"
     full_webhook_url = f"{WEBHOOK_URL}{webhook_path}"
+    if not full_webhook_url.startswith("https://"):
+        logger.error(f"Invalid WEBHOOK_URL: {full_webhook_url}. Must use HTTPS.")
+        raise ValueError("WEBHOOK_URL must use HTTPS")
     logger.info(f"Setting webhook: {full_webhook_url}")
     try:
         await app.initialize()
@@ -42,7 +45,8 @@ async def main():
         raise
     finally:
         try:
-            await app.stop()
+            if app.updater and app.updater.running:
+                await app.stop()
             await app.shutdown()
             logger.info("Application stopped successfully.")
         except Exception as e:
