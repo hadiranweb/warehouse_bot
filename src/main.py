@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from telegram.ext import Application
 from telegram.error import TelegramError
 from config import BOT_TOKEN, WEBHOOK_URL, PORT
@@ -50,11 +51,16 @@ async def main():
             await app.stop()
             await app.shutdown()
             logger.info("Application stopped successfully.")
+            # اطمینان از بسته شدن حلقه رویداد
+            loop = asyncio.get_running_loop()
+            tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
+            for task in tasks:
+                task.cancel()
+            await asyncio.sleep(0.1)  # فرصت دادن برای تکمیل خاموش کردن
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
-    import asyncio
     try:
         asyncio.run(main())
     except Exception as e:
