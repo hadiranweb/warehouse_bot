@@ -14,26 +14,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def main():
-    # مقداردهی اولیه پایگاه داده
     init_db()
-
-    # ساخت Application
     app = Application.builder().token(BOT_TOKEN).build()
-
-    # ثبت هندلرها
     register_role_handlers(app)
     register_seller_handlers(app)
     register_customer_handlers(app)
-
-    # تنظیم وب‌هوک
     webhook_path = f"/{BOT_TOKEN.replace(':', '_')}"
     full_webhook_url = f"{WEBHOOK_URL}{webhook_path}"
     logger.info(f"Setting webhook: {full_webhook_url}")
-
     try:
-        # تنظیم وب‌هوک
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
-        # اجرای اپلیکیشن با وب‌هوک
         await app.run_webhook(
             listen="0.0.0.0",
             port=PORT,
@@ -44,14 +34,14 @@ async def main():
         logger.info("Webhook started successfully.")
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
-        await app.stop()
-        await app.shutdown()
         raise
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        await app.stop()
-        await app.shutdown()
-        raise
+    finally:
+        try:
+            await app.stop()
+            await app.shutdown()
+            logger.info("Application stopped successfully.")
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
     import asyncio
@@ -59,5 +49,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         logger.error(f"Application error: {e}")
-    finally:
-        logger.info("Event loop closed.")
