@@ -15,7 +15,7 @@ async def main():
     app.add_handler(CommandHandler("delete", delete_item))
 
     PORT = int(os.environ.get("PORT", 8443))  # پورت پیش‌فرض برای webhook
-    RENDER_APP_NAME = os.environ.get("RENDER_APP_NAME", "warehouse-bot-123")
+    RENDER_APP_NAME = os.environ.get("RENDER_APP_NAME")
     webhook_url = f"https://{RENDER_APP_NAME}.onrender.com/{TELEGRAM_TOKEN}"
 
     print(f"Webhook تنظیم شد: {webhook_url}")
