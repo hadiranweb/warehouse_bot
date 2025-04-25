@@ -32,15 +32,18 @@ async def main():
     try:
         await app.initialize()
         await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
+        # استفاده از run_forever به‌جای run_webhook
         await app.start()
-        # استفاده از run_forever برای مدیریت بهتر حلقه
-        await app.run_webhook(
+        # تنظیم وب‌سرور به‌صورت دستی
+        from telegram.ext import WebhookServer
+        server = WebhookServer(
             listen="0.0.0.0",
             port=PORT,
+            application=app,
             url_path=webhook_path,
             secret_token="mysecret123",
-            bootstrap_retries=3,  # تلاش دوباره برای تنظیم وب‌هوک
         )
+        await server.serve_forever()
     except TelegramError as e:
         logger.error(f"Failed to start webhook: {e}")
         raise
