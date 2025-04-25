@@ -8,11 +8,22 @@ from handlers.role_selection import register_handlers as register_role_handlers
 from handlers.seller_handlers import register_handlers as register_seller_handlers
 from handlers.customer_handlers import register_handlers as register_customer_handlers
 
+from aiohttp import web
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+
+async def handle_webhook(request):
+    try:
+        update = await request.json()
+        await request.app["bot_app"].process_update(update)
+        return web.Response(status=200)
+    except Exception as e:
+        logger.error(f"Error handling update: {e}")
+        return web.Response(status=500)
 
 async def main():
     init_db()
@@ -20,55 +31,45 @@ async def main():
     register_role_handlers(app)
     register_seller_handlers(app)
     register_customer_handlers(app)
+
     webhook_path = f"/{BOT_TOKEN.replace(':', '_')}"
     full_webhook_url = f"{WEBHOOK_URL}{webhook_path}"
+
     if not full_webhook_url.startswith("https://"):
         logger.error(f"Invalid WEBHOOK_URL: {full_webhook_url}. Must use HTTPS.")
         raise ValueError("WEBHOOK_URL must use HTTPS")
+
     if ":" in WEBHOOK_URL.split("//")[1]:
         logger.error(f"WEBHOOK_URL contains invalid port: {WEBHOOK_URL}. Must use default HTTPS port (443).")
         raise ValueError("WEBHOOK_URL must not specify a port")
+
     logger.info(f"Setting webhook: {full_webhook_url}")
+
+    await app.initialize()
+    await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
+    await app.start()
+
+    aiohttp_app = web.Application()
+    aiohttp_app["bot_app"] = app
+    aiohttp_app.router.add_post(webhook_path, handle_webhook)
+
+    runner = web.AppRunner(aiohttp_app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+
+    logger.info(f"Webhook server started on port {PORT}")
+
     try:
-        await app.initialize()
-        await app.bot.set_webhook(full_webhook_url, secret_token="mysecret123")
-        await app.start()
-        # استفاده از run_forever با وب‌سرور دستی
-        from aiohttp import web
-        async def handle_webhook(request):
-            update = await request.json()
-            await app.process_update(update)
-            return web.Response(status=200)
-        aiohttp_app = web.Application()
-        aiohttp_app.router.add_post(f"/{webhook_path}", handle_webhook)
-        runner = web.AppRunner(aiohttp_app)
-        await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", PORT)
-        await site.start()
-        logger.info(f"Webhook server started on port {PORT}")
-        # اجرای اپلیکیشن تا خاموش شدن
-        await app.run_forever()
-    except TelegramError as e:
-        logger.error(f"Failed to start webhook: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        raise
+        while True:
+            await asyncio.sleep(3600)
+    except asyncio.CancelledError:
+        logger.info("Shutdown initiated.")
     finally:
-        try:
-            await app.stop()
-            await app.shutdown()
-            # توقف وب‌سرور
-            await runner.cleanup()
-            logger.info("Application and webhook server stopped successfully.")
-            # توقف تسک‌های باقی‌مونده
-            loop = asyncio.get_running_loop()
-            tasks = [task for task in asyncio.all_tasks(loop) if task is not asyncio.current_task()]
-            for task in tasks:
-                task.cancel()
-            await asyncio.sleep(0.5)  # فرصت برای تکمیل خاموش شدن
-        except Exception as e:
-            logger.error(f"Error during shutdown: {e}")
+        await runner.cleanup()
+        await app.stop()
+        await app.shutdown()
+        logger.info("Application and webhook server stopped successfully.")
 
 if __name__ == "__main__":
     try:
