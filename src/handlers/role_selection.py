@@ -49,5 +49,6 @@ def register_handlers(app: Application):
         entry_points=[CommandHandler("start", start)],
         states={SELECT_ROLE: [CallbackQueryHandler(select_role, pattern="^role_.*")]},
         fallbacks=[CommandHandler("cancel", cancel)],
+        per_message=True,
     )
     app.add_handler(conv_handler)
